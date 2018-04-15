@@ -1,0 +1,19 @@
+{
+  "name": "incent-api",
+  "version": "1.0.0",
+  "description": "IncentCard API Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com//IncentCard/incent-api"
+  },
+  "author": "IncentCard Team",
+  "license": "",
+  "dependencies": {
+    "express": "^4.16.3",
+    "typescript": "^2.8.1"
+  }
+}
