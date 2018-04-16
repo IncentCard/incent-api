@@ -52,8 +52,17 @@ export let putUser = (req: Request, res: Response) => {
     return;
   }
   const user = new User(payload);
-  postUserToMarqeta(JSON.stringify(user.convertToMarqeta()));
-
+  request.put({
+    body: JSON.stringify(user.convertToMarqeta()),
+    headers: {
+              "Accept": "application/json",
+              "Authorization": "Basic dXNlcjI3NTgxNTE5MzQ0MDU2Ojg4OTAxMTViLTdiOGUtNDRiOC05Mjc0LWI2ZjRlMGQzZmFlZA==",
+              "content-type": "application/json",
+              },
+    url: config.marqeta + "users/" + user.id,
+  }, (error, response, body) => {
+    console.log(body);
+  });
   res.json();
 };
 
@@ -85,6 +94,31 @@ export let getMarqetaTokenForUser = (req: Request, res: Response) => {
     body = JSON.parse(body);
     res.json({
       token: body.access_token.token,
+    });
+  });
+};
+
+export let kyc = (req: Request, res: Response) => {
+  const userToken = req.query.user;
+
+  const payload = {
+    manual_override: false,
+    user_token: userToken,
+  };
+
+  request.post({
+    body: JSON.stringify(payload),
+    headers: {
+              "Accept": "application/json",
+              "Authorization": "Basic dXNlcjI3NTgxNTE5MzQ0MDU2Ojg4OTAxMTViLTdiOGUtNDRiOC05Mjc0LWI2ZjRlMGQzZmFlZA==",
+              "content-type": "application/json",
+              },
+    url: config.marqeta + "kyc",
+  }, (error, response, body) => {
+    console.log(body);
+    body = JSON.parse(body);
+    res.json({
+      kyc_token: body.token,
     });
   });
 };

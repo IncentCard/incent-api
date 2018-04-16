@@ -17,4 +17,6 @@ app.put("/user", userController.putUser);
 
 app.get("/user/marqetatoken", userController.getMarqetaTokenForUser);
 
+app.get("/user/kyc", userController.kyc);
+
 export default app;
