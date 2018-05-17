@@ -2,37 +2,68 @@
   "name": "incent-api",
   "version": "1.0.0",
   "description": "IncentCard API Server",
+  "author": "IncentCard Team",
+  "license": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm run serve",
-    "serve": "node dist/server.js",
-    "build": "npm run build-ts",
-    "build-ts": "tsc",
-    "watch-node": "nodemon dist/server.js",
-    "watch-ts": "tsc -w",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\""
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "start": "npm run build && ts-node -r dotenv/config dist/server.js",
+    "build": "tsc",
+    "watch": "nodemon --config nodemon.json"
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json"
+    ],
+    "setupFiles": [
+      "./jest.setup.js"
+    ]
   },
   "repository": {
     "type": "git",
     "url": "https://github.com//IncentCard/incent-api"
   },
-  "author": "IncentCard Team",
-  "license": "",
   "dependencies": {
+    "@types/bcrypt": "^2.0.0",
     "@types/body-parser": "^1.16.8",
+    "@types/dotenv": "^4.0.3",
     "@types/express": "^4.11.1",
+    "@types/jest-each": "^0.3.0",
+    "@types/passport": "^0.4.5",
+    "@types/passport-http": "^0.3.6",
+    "@types/pg": "^7.4.8",
     "@types/request": "^2.47.0",
     "@types/uuid": "^3.4.3",
+    "bcrypt": "^2.0.1",
     "body-parser": "^1.18.2",
+    "dotenv": "^5.0.1",
     "express": "^4.16.3",
+    "jest-each": "^0.5.0",
+    "passport": "^0.4.0",
+    "passport-http": "^0.3.0",
+    "pg": "^7.4.3",
     "request": "^2.85.0",
     "typescript": "^2.8.1",
+    "typescript-logging": "^0.6.1",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
+    "@types/jest": "^22.2.3",
+    "@types/sinon": "^4.3.3",
     "concurrently": "^3.5.1",
+    "jest": "^22.4.3",
     "nodemon": "^1.17.3",
+    "sinon": "^5.0.7",
+    "ts-jest": "^22.4.6",
+    "ts-node": "^6.0.3",
     "tslint": "^5.9.1"
   }
 }

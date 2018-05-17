@@ -12,16 +12,16 @@ export class User {
   private _birthDate: string;
   private _ssn: string;
 
-  public constructor(json: any = {}) {
-    this.id = json.id;
-    this.firstName = json.firstName;
-    this.lastName = json.lastName;
+  public constructor(json: any = {}, isMarqeta = false) {
+    this.id = isMarqeta ? json.token : json.id;
+    this.firstName = isMarqeta ? json.first_name : json.firstName;
+    this.lastName = isMarqeta ? json.last_name : json.lastName;
     this.address1 = json.address1;
     this.city = json.city;
     this.state = json.state;
     this.zip = json.zip;
     this.country = json.country;
-    this.birthDate = json.birthDate;
+    this.birthDate = isMarqeta ? json.birth_date : json.birthDate;
     this.ssn = json.ssn;
   }
 
@@ -38,6 +38,25 @@ export class User {
       token: this.id,
       zip: this.zip,
     };
+  }
+
+  public convertToJSON(): any {
+    return {
+      address1: this.address1,
+      birthDate: this.birthDate,
+      city: this.city,
+      country: this.country,
+      firstName: this.firstName,
+      id: this.id,
+      lastName: this.lastName,
+      ssn: this.ssn,
+      state: this.state,
+      zip: this.zip,
+    };
+  }
+
+  public stringify(): string {
+    return JSON.stringify(this.convertToJSON());
   }
 
   //////// Getters and Setters ////////
