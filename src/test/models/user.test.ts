@@ -46,6 +46,29 @@ describe("User tests", () => {
         zip: "96818",
     };
 
+    test("Verify minimum arguments", () => {
+        const user: User = new User({ id: sampleJson.id });
+
+        for (const field in sampleJson) {
+            if (field === "id") {
+                expect(user[field]).toEqual(sampleJson[field]);
+            } else {
+                expect(user[field]).toBeUndefined();
+            }
+        }
+    });
+
+    test("Verify minimum arguments Marqeta", () => {
+        const user: User = new User({ token: sampleMarqeta.token });
+
+        for (const field in sampleJson) {
+            if (field === "id") {
+                expect(user[field]).toEqual(sampleMarqeta.token);
+            } else {
+                expect(user[field]).toBeUndefined();
+            }
+        }
+    });
     test("Verify constructor with all fields", () => {
         const user: User = new User(sampleJson);
 
@@ -62,28 +85,12 @@ describe("User tests", () => {
         }
     });
 
-    test("Verify empty constructor", () => {
-        const user: User = new User();
-
-        for (const field in sampleJson) {
-            expect(user[field]).toBeUndefined();
-        }
-    });
-
     test("Verify null constructor", () => {
-        const user: User = new User(null);
-
-        for (const field in sampleJson) {
-            expect(user[field]).toBeUndefined();
-        }
+        expect(() => new User(null)).toThrow("You must provide an ID or Token");
     });
 
     test("Verify undefined constructor", () => {
-        const user: User = new User(undefined);
-
-        for (const field in sampleJson) {
-            expect(user[field]).toBeUndefined();
-        }
+        expect(() => new User(null)).toThrow("You must provide an ID or Token");
     });
 
     test("Verify convertToJSON", () => {
@@ -103,15 +110,6 @@ describe("User tests", () => {
         const inflated = JSON.parse(flattened);
         for (const field in sampleJson) {
             expect(inflated[field]).toEqual(sampleJson[field]);
-        }
-    });
-
-    test("Verify convertToMarqeta", () => {
-        const user: User = new User(sampleJson);
-
-        const marqeta: MarqetaUser = user.convertToMarqeta();
-        for (const field in sampleMarqeta) {
-            expect(marqeta[field]).toEqual(sampleMarqeta[field]);
         }
     });
 });

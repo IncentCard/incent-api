@@ -1,19 +1,21 @@
 import { MarqetaUser } from "./MarqetaUser";
 
 export interface IUser {
+  id: string;
+
+  // optional parameters
   address1?: string;
   birthDate?: string;
   city?: string;
   country?: string;
   firstName?: string;
-  id?: string;
   lastName?: string;
   ssn?: string;
   state?: string;
   zip?: string;
 }
 
-export class User {
+export class User implements IUser {
   private _id: string;
   private _firstName: string;
   private _lastName: string;
@@ -25,9 +27,9 @@ export class User {
   private _birthDate: string;
   private _ssn: string;
 
-  public constructor(json: IUser | MarqetaUser = {}) {
+  public constructor(json: IUser | MarqetaUser) {
     if (!json) {
-      json = {};
+      throw new Error("You must provide an ID or Token");
     }
     const isMarqeta = this.isMarqetaUser(json);
 
@@ -78,10 +80,7 @@ export class User {
   }
 
   private isMarqetaUser(object: any): object is MarqetaUser {
-    return "token" in object ||
-      "first_name" in object ||
-      "last_name" in object ||
-      "birth_date" in object;
+    return "token" in object;
   }
 
   //////// Getters and Setters ////////
