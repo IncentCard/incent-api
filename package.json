@@ -10,6 +10,8 @@
     "test:watch": "jest --watch",
     "start": "npm run build && ts-node -r dotenv/config dist/server.js",
     "build": "tsc",
+    "clean": "rimraf dist/*",
+    "clean:build": "npm run clean && npm run build",
     "watch": "nodemon --config nodemon.json"
   },
   "jest": {
@@ -61,6 +63,7 @@
     "concurrently": "^3.5.1",
     "jest": "^22.4.3",
     "nodemon": "^1.17.3",
+    "rimraf": "^2.6.2",
     "sinon": "^5.0.7",
     "ts-jest": "^22.4.6",
     "ts-node": "^6.0.3",
