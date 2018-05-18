@@ -1,5 +1,18 @@
 import { MarqetaUser } from "./MarqetaUser";
 
+export interface IUser {
+  address1?: string;
+  birthDate?: string;
+  city?: string;
+  country?: string;
+  firstName?: string;
+  id?: string;
+  lastName?: string;
+  ssn?: string;
+  state?: string;
+  zip?: string;
+}
+
 export class User {
   private _id: string;
   private _firstName: string;
@@ -12,16 +25,21 @@ export class User {
   private _birthDate: string;
   private _ssn: string;
 
-  public constructor(json: any = {}, isMarqeta = false) {
-    this.id = isMarqeta ? json.token : json.id;
-    this.firstName = isMarqeta ? json.first_name : json.firstName;
-    this.lastName = isMarqeta ? json.last_name : json.lastName;
+  public constructor(json: IUser | MarqetaUser = {}) {
+    if (!json) {
+      json = {};
+    }
+    const isMarqeta = this.isMarqetaUser(json);
+
+    this.id = isMarqeta ? (json as MarqetaUser).token : (json as IUser).id;
+    this.firstName = isMarqeta ? (json as MarqetaUser).first_name : (json as IUser).firstName;
+    this.lastName = isMarqeta ? (json as MarqetaUser).last_name : (json as IUser).lastName;
     this.address1 = json.address1;
     this.city = json.city;
     this.state = json.state;
     this.zip = json.zip;
     this.country = json.country;
-    this.birthDate = isMarqeta ? json.birth_date : json.birthDate;
+    this.birthDate = isMarqeta ? (json as MarqetaUser).birth_date : (json as IUser).birthDate;
     this.ssn = json.ssn;
   }
 
@@ -57,6 +75,13 @@ export class User {
 
   public stringify(): string {
     return JSON.stringify(this.convertToJSON());
+  }
+
+  private isMarqetaUser(object: any): object is MarqetaUser {
+    return "token" in object ||
+      "first_name" in object ||
+      "last_name" in object ||
+      "birth_date" in object;
   }
 
   //////// Getters and Setters ////////

@@ -22,7 +22,7 @@ describe("Database Tests", () => {
                         expect(foundUser.firstName).toBe(user.firstName);
                     });
             });
-    }, 100);
+    }, 1000);
 
     test("User add, update, then get", async () => {
         const user: User = new User();
@@ -42,7 +42,7 @@ describe("Database Tests", () => {
                             });
                     });
             });
-    }, 100);
+    }, 1000);
 
     each([
         [null],

@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { Request, Response } from "express";
-import { addAdmin, getAdmin } from "../database";
+import { database } from "../app";
 import { Admin } from "../models/Admin";
 
 export let postAdmin = (req: Request, res: Response) => {
@@ -8,7 +8,7 @@ export let postAdmin = (req: Request, res: Response) => {
     // todo: verify all headers are present for JSON data
     const data = req.body;
     const admin: Admin = new Admin(data.username, data.password, data.permission);
-    addAdmin(admin);
+    database.addAdmin(admin);
     res.sendStatus(201);
 };
 
@@ -21,7 +21,7 @@ export let login = (req: Request, res: Response) => {
     // verify parameters
     // todo: verify all headers are present for JSON data
     const data = req.body;
-    getAdmin(data.username, (admin: Admin) => {
+    database.getAdmin(data.username).then((admin: Admin) => {
         if (bcrypt.compareSync(data.password, admin.password)) {
             res.json(JSON.stringify(admin));
         } else {

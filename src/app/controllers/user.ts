@@ -27,7 +27,7 @@ export let postUser = (req: Request, res: Response) => {
     console.log(body);
 
     // add response to database
-    const createdUser: User = new User(JSON.parse(body), true);
+    const createdUser: User = new User(JSON.parse(body));
     database.addUser(createdUser)
       .then(() => {
         res.json(createdUser.stringify());
