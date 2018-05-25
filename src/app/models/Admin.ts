@@ -1,12 +1,25 @@
 export class Admin {
     private _username: string;
     private _password: string;
-    private _permissions: string[];
 
-    public constructor(username: string, password: string, permissions: string[]) {
+    public constructor(username: string, password: string) {
+        this.checkUsername(username);
+        this.checkPassword(password);
+
         this.username = username;
         this.password = password;
-        this.permissions = permissions;
+    }
+
+    private checkUsername(username: string): void {
+        if (!username) {
+            throw new Error("Username is required");
+        }
+    }
+
+    private checkPassword(password: string): void {
+        if (!password) {
+            throw new Error("Password is required and can't be empty");
+        }
     }
 
     //////// Getters and Setters ////////
@@ -23,6 +36,7 @@ export class Admin {
      * @param {string} value
      */
     public set username(value: string) {
+        this.checkUsername(value);
         this._username = value;
     }
 
@@ -39,22 +53,7 @@ export class Admin {
      * @param {string} value
      */
     public set password(value: string) {
+        this.checkPassword(value);
         this._password = value;
-    }
-
-    /**
-     * Getter permissions
-     * @return {string[]}
-     */
-    public get permissions(): string[] {
-        return this._permissions;
-    }
-
-    /**
-     * Setter permissions
-     * @param {string[]} value
-     */
-    public set permissions(value: string[]) {
-        this._permissions = value;
     }
 }

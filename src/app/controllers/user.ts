@@ -10,8 +10,8 @@ export let postUser = (req: Request, res: Response) => {
   const data = req.body;
 
   // create a user based on passed in info
+  data.id = data.id || uuid.v4();
   const user: User = new User(data);
-  user.id = uuid.v4();
 
   const postBody = JSON.stringify(user.convertToMarqeta());
 

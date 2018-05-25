@@ -7,7 +7,7 @@ export let postAdmin = (req: Request, res: Response) => {
     // verify parameters
     // todo: verify all headers are present for JSON data
     const data = req.body;
-    const admin: Admin = new Admin(data.username, data.password, data.permission);
+    const admin: Admin = new Admin(data.username, data.password);
     database.addAdmin(admin);
     res.sendStatus(201);
 };

@@ -97,6 +97,9 @@ export class User implements IUser {
    * @param {string} value
    */
   public set id(value: string) {
+    if (!value) {
+      throw new Error("ID can't be set to null, undefined, or empty string");
+    }
     this._id = value;
   }
 

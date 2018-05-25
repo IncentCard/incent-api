@@ -1,12 +1,11 @@
 import * as bodyParser from "body-parser";
-import dotenv from "dotenv";
 import express from "express";
 import passport from "passport";
 import * as adminController from "./controllers/admin";
 import * as authController from "./controllers/auth";
 import * as userController from "./controllers/user";
 import * as utility from "./controllers/utility";
-import DatabaseClient from "./DatabaseClient";
+import DatabaseClient from "./database/DatabaseClient";
 
 export const database = new DatabaseClient(process.env.DATABASE_URL || "postgres://localhost:5432/test");
 

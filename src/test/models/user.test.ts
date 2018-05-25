@@ -90,7 +90,48 @@ describe("User tests", () => {
     });
 
     test("Verify undefined constructor", () => {
-        expect(() => new User(null)).toThrow("You must provide an ID or Token");
+        expect(() => new User(undefined)).toThrow("You must provide an ID or Token");
+    });
+
+    test("Verify null ID constructor", () => {
+        expect(() => new User({id: null})).toThrow("ID can't be set to null, undefined, or empty string");
+    });
+
+    test("Verify undefined ID constructor", () => {
+        expect(() => new User({id: undefined})).toThrow("ID can't be set to null, undefined, or empty string");
+    });
+
+    test("Verify empty ID constructor", () => {
+        expect(() => new User({id: ""})).toThrow("ID can't be set to null, undefined, or empty string");
+    });
+
+    test("Verify null token constructor", () => {
+        expect(() => new User({token: null})).toThrow("ID can't be set to null, undefined, or empty string");
+    });
+
+    test("Verify undefined token constructor", () => {
+        expect(() => new User({token: undefined})).toThrow("ID can't be set to null, undefined, or empty string");
+    });
+
+    test("Verify empty token constructor", () => {
+        expect(() => new User({token: ""})).toThrow("ID can't be set to null, undefined, or empty string");
+    });
+
+    test("Verify update to all fields", () => {
+        const user: User = new User(sampleJson);
+
+        for (const field in sampleJson) {
+            user[field] = "updated";
+            expect(user[field]).toEqual("updated");
+        }
+    });
+
+    test("Verify update to all fields with illegal values", () => {
+        const user: User = new User(sampleJson);
+
+        expect(() => user.id = null).toThrow("ID can't be set to null, undefined, or empty string");
+        expect(() => user.id = undefined).toThrow("ID can't be set to null, undefined, or empty string");
+        expect(() => user.id = "").toThrow("ID can't be set to null, undefined, or empty string");
     });
 
     test("Verify convertToJSON", () => {
@@ -98,6 +139,7 @@ describe("User tests", () => {
 
         const json = user.convertToJSON();
         expect(json instanceof User).toBeFalsy();
+        expect(JSON.stringify(json));
         for (const field in sampleJson) {
             expect(json[field]).toEqual(sampleJson[field]);
         }
