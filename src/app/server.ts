@@ -1,5 +1,5 @@
 import app from "./app";
-import { logFactory, serviceLog } from "./configLog4j";
+import { serviceLog } from "./configLog4j";
 
 const server = app.listen(app.get("port"), () => {
 

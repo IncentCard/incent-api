@@ -68,7 +68,6 @@ export let putUser = (req: Request, res: Response) => {
 
 export let getUser = (req: Request, res: Response) => {
   const payload = req.body;
-  console.log(payload);
   if (!payload) {
     res.json({
       error: true,

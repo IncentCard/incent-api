@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import * as firebase from "firebase-admin";
 import "jest";
 import each from "jest-each";
 import * as uuid from "uuid";
@@ -9,7 +10,12 @@ describe("Admin database Tests", () => {
     let database: DatabaseClient;
 
     beforeAll(() => {
-        database = new DatabaseClient(process.env.DATABASE_URL || "postgres://localhost:5432/test");
+        const firebaseAdmin = firebase.initializeApp({
+            credential: firebase.credential.cert("./serviceAccountKey.json"),
+            databaseURL: "https://incentcard.firebaseio.com",
+          });
+        database = new DatabaseClient(process.env.DATABASE_URL || "postgres://localhost:5432/test", 
+            firebaseAdmin.firestore());
     });
 
     test("Admin add and get", () => {

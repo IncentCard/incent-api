@@ -4,12 +4,17 @@ import * as uuid from "uuid";
 import DatabaseClient from "../../app/database/DatabaseClient";
 import { Admin } from "../../app/models/Admin";
 import { User } from "../../app/models/User";
+import * as firebase from "firebase-admin";
 
 describe("Database Connection Tests", () => {
     let database: DatabaseClient;
 
     beforeAll(() => {
-        database = new DatabaseClient("postgres://localhost:5432/bogus");
+        const firebaseAdmin = firebase.initializeApp({
+            credential: firebase.credential.cert("./serviceAccountKey.json"),
+            databaseURL: "https://incentcard.firebaseio.com",
+          });
+        database = new DatabaseClient("postgres://localhost:5432/bogus", firebaseAdmin.firestore());
     });
 
     test("User add with bogus database url", () => {

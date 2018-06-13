@@ -1,3 +1,4 @@
+import * as firebase from "firebase-admin";
 import "jest";
 import each from "jest-each";
 import * as uuid from "uuid";
@@ -8,11 +9,16 @@ describe("User database Tests", () => {
     let database: DatabaseClient;
 
     beforeAll(() => {
-        database = new DatabaseClient(process.env.DATABASE_URL || "postgres://localhost:5432/test");
+        const firebaseAdmin = firebase.initializeApp({
+            credential: firebase.credential.cert("./serviceAccountKey.json"),
+            databaseURL: "https://incentcard.firebaseio.com",
+        });
+        database = new DatabaseClient(process.env.DATABASE_URL || "postgres://localhost:5432/test",
+            firebaseAdmin.firestore());
     });
 
     test("User add and get", () => {
-        const user: User = new User({id: uuid.v4()});
+        const user: User = new User({ id: uuid.v4() });
         user.firstName = "Joe";
         return database.addUser(user)
             .then(() => {
@@ -24,7 +30,7 @@ describe("User database Tests", () => {
     }, 1000);
 
     test("User add, update, then get", () => {
-        const user: User = new User({id: uuid.v4()});
+        const user: User = new User({ id: uuid.v4() });
         user.firstName = "Joe";
         return database.addUser(user)
             .then(() => {
@@ -43,7 +49,7 @@ describe("User database Tests", () => {
     }, 1000);
 
     test("User add and add again as duplicate", () => {
-        const user: User = new User({id: uuid.v4()});
+        const user: User = new User({ id: uuid.v4() });
         user.firstName = "Joe";
         return database.addUser(user)
             .then(() => {

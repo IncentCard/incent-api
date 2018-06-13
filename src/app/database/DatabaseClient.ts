@@ -1,14 +1,18 @@
+import { WriteResult } from "@google-cloud/firestore";
 import bcrypt from "bcrypt";
 import pg from "pg";
 import { serviceLog } from "../configLog4j";
 import { Admin } from "../models/Admin";
 import { User } from "../models/User";
 import { DatabaseError } from "./DatabaseError";
+import { Permission } from "../models/Permission";
 
-class DatabaseClient {
+export default class DatabaseClient {
     private pool: pg.Pool;
+    private firestore: FirebaseFirestore.Firestore;
 
-    public constructor(connectionString: string) {
+    public constructor(connectionString: string, firestore: FirebaseFirestore.Firestore) {
+        this.firestore = firestore;
         this.pool = new pg.Pool({
             connectionString,
         });
@@ -150,6 +154,30 @@ class DatabaseClient {
             });
 
     }
-}
 
-export default DatabaseClient;
+    public addWaitList(email: string, firstName: string, lastName: string): Promise<WriteResult> {
+        return this.firestore.collection("waitlist").doc(email).set({
+            email,
+            firstName,
+            lastName,
+        });
+    }
+
+    public getPermissions(uid: string): Promise<Permission> {
+        return this.firestore.collection("permissions").doc(uid).get()
+            .then((doc) => {
+                if (!doc.exists) {
+                    return {};
+                } else {
+                    let data: Permission = {};
+                    try {
+                        data = doc.data();
+                    } catch (err) {
+                        serviceLog.error(err);
+                        return {};
+                    }
+                    return data;
+                }
+            });
+    }
+}
