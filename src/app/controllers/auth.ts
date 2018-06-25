@@ -1,11 +1,10 @@
-import * as bcrypt from "bcrypt";
 import { NextFunction, Request, Response } from "express";
 import * as admin from "firebase-admin";
 import passport from "passport";
 import * as bearer from "passport-http-bearer";
 import { database, firebase } from "../app";
 import { serviceLog } from "../configLog4j";
-import { Admin } from "../models/Admin";
+import { Permission } from "../models/Permission";
 
 
 // passport.use(new passportStrategy.BasicStrategy(
@@ -36,7 +35,7 @@ passport.use(new bearer.Strategy(
     (token, done) => {
         firebase.auth().verifyIdToken(token)
             .then((decodedToken: admin.auth.DecodedIdToken) => {
-                return done(null, {uid: decodedToken.uid});
+                return done(null, { uid: decodedToken.uid });
             })
             .catch((err) => {
                 return done(err);
@@ -71,7 +70,6 @@ export const isAllowed = (req: Request, res: Response, next: NextFunction) => {
     if (!req.user || !instanceOfAuthUser(req.user)) {
         res.sendStatus(403);
     } else {
-        const user: AuthUser = req.user;
         database.getPermissions(req.user.uid)
             .then((permission: Permission) => {
                 serviceLog.debug("Permission for " + req.user.uid + " " + JSON.stringify(permission));
@@ -81,7 +79,7 @@ export const isAllowed = (req: Request, res: Response, next: NextFunction) => {
                     res.sendStatus(403);
                 }
             })
-            .catch((err) => {
+            .catch(() => {
                 serviceLog.error("Couldn't evaluate permissions for " + req.user.uid);
                 res.sendStatus(403);
             });

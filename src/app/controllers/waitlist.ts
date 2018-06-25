@@ -1,7 +1,6 @@
+import { WriteResult } from "@google-cloud/firestore";
 import { Request, Response } from "express";
 import { database } from "../app";
-import { serviceLog } from "../configLog4j";
-import { WriteResult } from "@google-cloud/firestore";
 
 interface PostWaitListPayload {
     email: string;

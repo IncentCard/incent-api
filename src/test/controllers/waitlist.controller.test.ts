@@ -3,10 +3,17 @@ import "jest";
 import request from "supertest";
 import * as uuid from "uuid";
 import app from "../../app/app";
-import * as appStuff from "../../app/app";
+import { mockAddWaitList, mockGetPermissions } from "../../app/database/__mocks__/DatabaseClient";
+import { Permission } from "../../app/models/Permission";
 import * as utilities from "../utilities";
 
-jest.mock("../../app/database/DatabaseClient");
+// Mocks the DatabaseClient and allows for modifications of mock implementations directly
+jest.mock("../../app/database/DatabaseClient", () => {
+    // tslint:disable-next-line:only-arrow-functions
+    return function() {
+        return require("../../app/database/__mocks__/DatabaseClient").mock;
+    };
+});
 
 describe("Waitlist endpoint tests", () => {
     let server: Server;
@@ -31,8 +38,10 @@ describe("Waitlist endpoint tests", () => {
             .expect(401, done);
     });
 
-    xtest("waitlist with no permissions", (done) => {
-        // todo: figure out how to fix mock to return a different permission
+    test("waitlist with no permissions", (done) => {
+        mockGetPermissions.mockImplementationOnce((): Promise<Permission> => {
+            return Promise.resolve({});
+        });
         utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD, (idToken: string) => {
             request(server)
                 .post("/waitlist")
@@ -48,7 +57,6 @@ describe("Waitlist endpoint tests", () => {
     });
 
     test("waitlist add", (done) => {
-        const spy = jest.spyOn(appStuff.database, "addWaitList");
         const lastName = uuid.v4();
         utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD, (idToken: string) => {
             request(server)
@@ -62,14 +70,13 @@ describe("Waitlist endpoint tests", () => {
                 })
                 .expect(201)
                 .then(() => {
-                    expect(spy).toHaveBeenCalledWith("test@incentcard.com", "Joe", lastName);
+                    expect(mockAddWaitList).toHaveBeenCalledWith("test@incentcard.com", "Joe", lastName);
                     done();
                 });
         });
     });
 
     test("waitlist add duplicate", (done) => {
-        const spy = jest.spyOn(appStuff.database, "addWaitList");
         const lastName = uuid.v4();
         utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD, (idToken: string) => {
             request(server)
@@ -83,7 +90,7 @@ describe("Waitlist endpoint tests", () => {
                 })
                 .expect(201)
                 .then(() => {
-                    expect(spy).toHaveBeenCalledWith("test@incentcard.com", "Joe", lastName);
+                    expect(mockAddWaitList).toHaveBeenCalledWith("test@incentcard.com", "Joe", lastName);
                     done();
                 });
         });
