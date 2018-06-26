@@ -60,23 +60,41 @@ export class User implements IUser {
     };
   }
 
-  public convertToJSON(): any {
-    return {
-      address1: this.address1,
-      birthDate: this.birthDate,
-      city: this.city,
-      country: this.country,
-      firstName: this.firstName,
+  public convertToJSON(compress = false): IUser {
+    const json: IUser = {
       id: this.id,
-      lastName: this.lastName,
-      ssn: this.ssn,
-      state: this.state,
-      zip: this.zip,
     };
+
+    if (!compress) {
+      json.address1 = this.address1;
+      json.birthDate = this.birthDate;
+      json.city = this.city;
+      json.country = this.country;
+      json.firstName = this.firstName;
+      json.lastName = this.lastName;
+      json.ssn = this.ssn;
+      json.state = this.state;
+      json.zip = this.zip;
+    }
+
+    return json;
   }
 
-  public stringify(): string {
-    return JSON.stringify(this.convertToJSON());
+  public stringify(compress = false): string {
+    return JSON.stringify(this.convertToJSON(compress));
+  }
+
+  public merge(other: User) {
+    this.id = other.id || this.id;
+    this.firstName = other.firstName || this.firstName;
+    this.lastName = other.lastName || this.lastName;
+    this.address1 = other.address1 || this.address1;
+    this.city = other.city || this.city;
+    this.state = other.state || this.state;
+    this.zip = other.zip || this.zip;
+    this.country = other.country || this.country;
+    this.birthDate = other.birthDate || this.birthDate;
+    this.ssn = other.ssn || this.ssn;
   }
 
   private isMarqetaUser(object: any): object is MarqetaUser {

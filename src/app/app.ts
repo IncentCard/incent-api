@@ -2,12 +2,12 @@ import * as bodyParser from "body-parser";
 import express from "express";
 import * as admin from "firebase-admin";
 import passport from "passport";
-import * as adminController from "./controllers/admin";
 import * as authController from "./controllers/auth";
 import * as userController from "./controllers/user";
 import * as utility from "./controllers/utility";
 import * as waitlistController from "./controllers/waitlist";
 import DatabaseClient from "./database/DatabaseClient";
+import MarqetaClient from "./database/MarqetaClient";
 
 export const firebase = admin.initializeApp({
   credential: admin.credential.cert("./serviceAccountKey.json"),
@@ -15,7 +15,8 @@ export const firebase = admin.initializeApp({
 });
 
 const databaseLocation = process.env.DATABASE_URL || "postgres://localhost:5432/test";
-export const database = new DatabaseClient(databaseLocation, admin.firestore());
+export const marqetaClient: MarqetaClient = new MarqetaClient();
+export const database = new DatabaseClient(databaseLocation, admin.firestore(), marqetaClient);
 
 const app = express();
 app.use(bodyParser.json());

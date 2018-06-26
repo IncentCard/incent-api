@@ -19,6 +19,7 @@
     "url": "https://github.com//IncentCard/incent-api"
   },
   "dependencies": {
+    "@types/axios": "^0.14.0",
     "@types/bcrypt": "^2.0.0",
     "@types/body-parser": "^1.16.8",
     "@types/dotenv": "^4.0.3",
@@ -29,6 +30,7 @@
     "@types/pg": "^7.4.8",
     "@types/request": "^2.47.0",
     "@types/uuid": "^3.4.3",
+    "axios": "^0.18.0",
     "bcrypt": "^2.0.1",
     "body-parser": "^1.18.2",
     "dotenv": "^5.0.1",

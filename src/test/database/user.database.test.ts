@@ -3,6 +3,7 @@ import "jest";
 import each from "jest-each";
 import * as uuid from "uuid";
 import DatabaseClient from "../../app/database/DatabaseClient";
+import MarqetaClient from "../../app/database/MarqetaClient";
 import { User } from "../../app/models/User";
 
 describe("User database Tests", () => {
@@ -14,7 +15,8 @@ describe("User database Tests", () => {
             databaseURL: "https://incentcard.firebaseio.com",
         });
         database = new DatabaseClient(process.env.DATABASE_URL || "postgres://localhost:5432/test",
-            firebaseAdmin.firestore());
+            firebaseAdmin.firestore(),
+            new MarqetaClient());
     });
 
     test("User add and get", () => {
@@ -27,7 +29,7 @@ describe("User database Tests", () => {
                         return expect(foundUser.firstName).toBe(user.firstName);
                     });
             });
-    }, 1000);
+    });
 
     test("User add, update, then get", () => {
         const user: User = new User({ id: uuid.v4() });
@@ -46,7 +48,7 @@ describe("User database Tests", () => {
                             });
                     });
             });
-    }, 1000);
+    });
 
     test("User add and add again as duplicate", () => {
         const user: User = new User({ id: uuid.v4() });
@@ -56,7 +58,7 @@ describe("User database Tests", () => {
                 user.firstName = "Chad";
                 return expect(database.addUser(user)).rejects.toThrow("Duplicate user ID or Token");
             });
-    }, 1000);
+    }, 2000);
 
     test("User null add", () => {
         return expect(database.addUser(null)).rejects.toThrow("User must not be null");

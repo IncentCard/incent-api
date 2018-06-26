@@ -6,7 +6,8 @@ import { database, firebase } from "../app";
 import { serviceLog } from "../configLog4j";
 import { Permission } from "../models/Permission";
 
-
+// tslint:disable-next-line:jsdoc-format
+/**@deprecated */
 // passport.use(new passportStrategy.BasicStrategy(
 //     (username, password, callback) => {
 //         console.log("Trying to authenticate");
@@ -20,7 +21,6 @@ import { Permission } from "../models/Permission";
 //         });
 //     },
 // ));
-
 // export const isAuthenticated = passport.authenticate("basic", {session: false});
 
 interface AuthUser extends Express.User {

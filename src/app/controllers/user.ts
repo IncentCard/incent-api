@@ -4,6 +4,8 @@ import * as uuid from "uuid";
 import { database } from "../app";
 import { User } from "../models/User";
 
+// todo: add error handling to all failed promises
+
 export let postUser = (req: Request, res: Response) => {
   // verify parameters
   // todo: verify all headers are present for JSON data
@@ -13,26 +15,10 @@ export let postUser = (req: Request, res: Response) => {
   data.id = data.id || uuid.v4();
   const user: User = new User(data);
 
-  const postBody = JSON.stringify(user.convertToMarqeta());
-
-  request.post({
-    body: postBody,
-    headers: {
-      "Accept": "application/json",
-      "Authorization": "Basic dXNlcjI3NTgxNTE5MzQ0MDU2Ojg4OTAxMTViLTdiOGUtNDRiOC05Mjc0LWI2ZjRlMGQzZmFlZA==",
-      "content-type": "application/json",
-    },
-    url: process.env.MARQETA + "users",
-  }, (error, response, body) => {
-    console.log(body);
-
-    // add response to database
-    const createdUser: User = new User(JSON.parse(body));
-    database.addUser(createdUser)
-      .then(() => {
-        res.json(createdUser.stringify());
-      });
-  });
+  database.addUser(user)
+    .then(() => {
+      res.json(user.convertToJSON());
+    });
 };
 
 export let putUser = (req: Request, res: Response) => {
@@ -45,25 +31,14 @@ export let putUser = (req: Request, res: Response) => {
     return;
   }
 
-  console.log("traitor");
   const user = new User(payload);
-  request.put({
-    body: JSON.stringify(user.convertToMarqeta()),
-    headers: {
-      "Accept": "application/json",
-      "Authorization": "Basic dXNlcjI3NTgxNTE5MzQ0MDU2Ojg4OTAxMTViLTdiOGUtNDRiOC05Mjc0LWI2ZjRlMGQzZmFlZA==",
-      "content-type": "application/json",
-    },
-    url: process.env.MARQETA + "users/" + user.id,
-  }, (error, response, body) => {
-    console.log(body);
-    if (error) {
-      res.json(error);
-    } else {
-      database.updateUser(user);
+  database.updateUser(user)
+    .then(() => {
       res.json(user.convertToJSON());
-    }
-  });
+    })
+    .catch((err) => {
+      res.sendStatus(422);
+    });
 };
 
 export let getUser = (req: Request, res: Response) => {
@@ -75,72 +50,75 @@ export let getUser = (req: Request, res: Response) => {
     return;
   }
 
-  database.getUser(req.params.id).then((user: User) => {
-    res.json(user.convertToJSON());
+  database.getUser(req.params.id)
+    .then((user: User) => {
+      res.json(user.convertToJSON());
   });
 };
 
-function login(email: string, password: string, userToken: string, callback: request.RequestCallback) {
-  const payload = {
-    email,
-    password,
-    user_token: userToken,
-  };
+/////// Below here is deprecated ///////
 
-  request.post({
-    body: JSON.stringify(payload),
-    headers: {
-      "Accept": "application/json",
-      "Authorization": "Basic dXNlcjI3NTgxNTE5MzQ0MDU2Ojg4OTAxMTViLTdiOGUtNDRiOC05Mjc0LWI2ZjRlMGQzZmFlZA==",
-      "content-type": "application/json",
-    },
-    url: process.env.MARQETA + "users/auth/login",
-  }, callback);
-}
+// function login(email: string, password: string, userToken: string, callback: request.RequestCallback) {
+//   const payload = {
+//     email,
+//     password,
+//     user_token: userToken,
+//   };
 
-// get marqeta auth token for user
-export let postLogin = (req: Request, res: Response) => {
-  const data = req.body;
-  const userToken = data.userToken;
+//   request.post({
+//     body: JSON.stringify(payload),
+//     headers: {
+//       "Accept": "application/json",
+//       "Authorization": "Basic dXNlcjI3NTgxNTE5MzQ0MDU2Ojg4OTAxMTViLTdiOGUtNDRiOC05Mjc0LWI2ZjRlMGQzZmFlZA==",
+//       "content-type": "application/json",
+//     },
+//     url: process.env.MARQETA + "users/auth/login",
+//   }, callback);
+// }
 
-  console.log(userToken);
-  if (!userToken) {
-    res.json({
-      error: true,
-    });
-    return;
-  }
+// // get marqeta auth token for user
+// export let postLogin = (req: Request, res: Response) => {
+//   const data = req.body;
+//   const userToken = data.userToken;
 
-  login(data.email, data.password, userToken, (error, response, body) => {
-    console.log(body);
-    body = JSON.parse(body);
-    res.json({
-      token: body.access_token.token,
-    });
-  });
-};
+//   console.log(userToken);
+//   if (!userToken) {
+//     res.json({
+//       error: true,
+//     });
+//     return;
+//   }
 
-export let kyc = (req: Request, res: Response) => {
-  const userToken = req.query.user;
+//   login(data.email, data.password, userToken, (error, response, body) => {
+//     console.log(body);
+//     body = JSON.parse(body);
+//     res.json({
+//       token: body.access_token.token,
+//     });
+//   });
+// };
 
-  const payload = {
-    manual_override: false,
-    user_token: userToken,
-  };
+// export let kyc = (req: Request, res: Response) => {
+//   const userToken = req.query.user;
 
-  request.post({
-    body: JSON.stringify(payload),
-    headers: {
-      "Accept": "application/json",
-      "Authorization": "Basic dXNlcjI3NTgxNTE5MzQ0MDU2Ojg4OTAxMTViLTdiOGUtNDRiOC05Mjc0LWI2ZjRlMGQzZmFlZA==",
-      "content-type": "application/json",
-    },
-    url: process.env.MARQETA + "kyc",
-  }, (error, response, body) => {
-    console.log(body);
-    body = JSON.parse(body);
-    res.json({
-      kyc_token: body.token,
-    });
-  });
-};
+//   const payload = {
+//     manual_override: false,
+//     user_token: userToken,
+//   };
+
+//   request.post({
+//     body: JSON.stringify(payload),
+//     headers: {
+//       "Accept": "application/json",
+//       "Authorization": "Basic dXNlcjI3NTgxNTE5MzQ0MDU2Ojg4OTAxMTViLTdiOGUtNDRiOC05Mjc0LWI2ZjRlMGQzZmFlZA==",
+//       "content-type": "application/json",
+//     },
+//     url: process.env.MARQETA + "kyc",
+//   }, (error, response, body) => {
+//     console.log(body);
+//     body = JSON.parse(body);
+//     res.json({
+//       kyc_token: body.token,
+//     });
+//   });
+// };

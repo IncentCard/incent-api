@@ -1,3 +1,7 @@
+// tslint:disable:jsdoc-format
+/**
+ * @deprecated
+
 import bcrypt from "bcrypt";
 import { Request, Response } from "express";
 import { database } from "../app";
@@ -29,3 +33,4 @@ export let login = (req: Request, res: Response) => {
         }
     });
 };
+*/

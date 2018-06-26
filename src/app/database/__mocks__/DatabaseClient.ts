@@ -34,16 +34,13 @@ export const mockGetPermissions = jest.fn().mockImplementation(
     });
 
 export const mock = {
+    addUser: mockAddUser,
     addWaitList: mockAddWaitList,
     getPermissions: mockGetPermissions,
+    getUser: mockGetUser,
+    updateUser: mockUpdateUser,
 };
 
 export default jest.fn().mockImplementation(() => {
-    return {
-        addUser: mockAddUser,
-        addWaitList: mockAddWaitList,
-        getPermissions: mockGetPermissions,
-        getUser: mockGetUser,
-        updateUser: mockUpdateUser,
-    };
+    return mock;
 });

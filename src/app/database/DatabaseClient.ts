@@ -1,21 +1,26 @@
 import { WriteResult } from "@google-cloud/firestore";
 import bcrypt from "bcrypt";
 import pg from "pg";
-import { serviceLog } from "../configLog4j";
+import { Logger } from "typescript-logging";
+import { logFactory } from "../configLog4j";
 import { Admin } from "../models/Admin";
+import { Permission } from "../models/Permission";
 import { User } from "../models/User";
 import { DatabaseError } from "./DatabaseError";
-import { Permission } from "../models/Permission";
+import MarqetaClient from "./MarqetaClient";
 
 export default class DatabaseClient {
     private pool: pg.Pool;
     private firestore: FirebaseFirestore.Firestore;
+    private marqetaClient: MarqetaClient;
+    private logger: Logger = logFactory.getLogger("database");
 
-    public constructor(connectionString: string, firestore: FirebaseFirestore.Firestore) {
+    public constructor(connectionString: string, firestore: FirebaseFirestore.Firestore, marqetaClient: MarqetaClient) {
         this.firestore = firestore;
         this.pool = new pg.Pool({
             connectionString,
         });
+        this.marqetaClient = marqetaClient;
     }
 
     public addUser(user: User): Promise<void> {
@@ -26,16 +31,33 @@ export default class DatabaseClient {
             return Promise.reject(new Error("User ID must be provided"));
         }
 
-        return this.pool.query("INSERT INTO users(id, data) values($1, $2)", [user.id, user.stringify()])
-            .then(() => {
-                serviceLog.debug(`Added user ${user.id} to database`);
+        const time = Date.now();
+        return this.marqetaClient.addUser(user)
+            .then((response) => {
+                this.logger.debug("User data returned from marqeta: " + JSON.stringify(response.data));
+                this.logger.debug("Marqeta request took: " + ((Date.now() - time) / 1000) + " seconds.");
+                // add response to database
+                const createdUser: User = new User(response.data);
+                user.merge(createdUser);
+                return this.pool.query("INSERT INTO users(id, data) values($1, $2)", [user.id, user.stringify(true)])
+                    .then(() => {
+                        this.logger.debug(`Added user ${user.id} to database`);
+                    })
+                    .catch((err: Error) => {
+                        if (err.message.includes("duplicate")) {
+                            return Promise.reject(new Error("Duplicate user ID or Token"));
+                        } else {
+                            return Promise.reject(new Error("Failed to add entry to database"));
+                        }
+                    });
             })
             .catch((err: Error) => {
-                if (err.message.indexOf("duplicate") >= 0) {
+                if (err.message.includes("Request failed with status code 409")) {
                     return Promise.reject(new Error("Duplicate user ID or Token"));
-                } else {
-                    return Promise.reject(new Error("Failed to add entry to database"));
                 }
+
+                this.logger.error(err.message);
+                return Promise.reject(err);
             });
     }
 
@@ -47,15 +69,16 @@ export default class DatabaseClient {
             return Promise.reject(new Error("User ID must be provided"));
         }
 
-        return this.pool.connect()
-            .then((client) => {
-                return client.query("UPDATE users SET data = $1 WHERE id = $2", [user.stringify(), user.id])
-                    .then((res) => {
-                        client.release();
+        return this.marqetaClient.updateUser(user)
+            .then((response) => {
+                this.logger.debug("Updated marqeta user: " + response.data);
+                return this.pool.query("UPDATE users SET data = $1 WHERE id = $2", [user.stringify(true), user.id])
+                    .then(() => {
+                        return Promise.resolve();
+                    })
+                    .catch(() => {
+                        return Promise.reject(new Error("Failed to update entry in database"));
                     });
-            })
-            .catch((err) => {
-                return Promise.reject(new Error("Failed to update entry in database"));
             });
     }
 
@@ -64,20 +87,51 @@ export default class DatabaseClient {
             return Promise.reject(new Error("ID must not be null"));
         }
 
-        return this.pool.connect()
-            .then((client) => {
-                return client.query("SELECT data FROM users WHERE id = $1",
+        return this.marqetaClient.getUser(id)
+            .then((response) => {
+                const user: User = new User(response.data);
+                return this.pool.query("SELECT data FROM users WHERE id = $1",
                     [id]).then((res): Promise<User> => {
-                        client.release();
                         const data = res.rows[0];
-                        return Promise.resolve(new User(data.data));
+                        user.merge(new User(data.data));
+                        return Promise.resolve(user);
+                    })
+                    .catch(() => {
+                        return Promise.reject(new Error("Failed to get entry from database"));
                     });
-            })
-            .catch((err) => {
-                return Promise.reject(new Error("Failed to get entry from database"));
             });
     }
 
+    public addWaitList(email: string, firstName: string, lastName: string): Promise<WriteResult> {
+        return this.firestore.collection("waitlist").doc(email).set({
+            email,
+            firstName,
+            lastName,
+        });
+    }
+
+    public getPermissions(uid: string): Promise<Permission> {
+        return this.firestore.collection("permissions").doc(uid).get()
+            .then((doc) => {
+                if (!doc.exists) {
+                    return {};
+                } else {
+                    let data: Permission = {};
+                    try {
+                        data = doc.data();
+                    } catch (err) {
+                        this.logger.error(err);
+                        return {};
+                    }
+                    return data;
+                }
+            });
+    }
+
+    /////// BELOW HERE IS DEPRECATED //////
+
+    // tslint:disable:jsdoc-format
+    /** @deprecated
     public addAdmin(admin: Admin): Promise<void> {
         if (!admin) {
             return Promise.reject(new Error("Admin must not be null"));
@@ -91,13 +145,13 @@ export default class DatabaseClient {
                             .then((hash) => {
                                 return client.query("INSERT INTO admins(username, password) values($1, $2)",
                                     [admin.username, hash])
-                                    .then((res) => {
+                                    .then(() => {
                                         return client.release();
                                     });
                             });
                     });
             })
-            .catch((err) => {
+            .catch(() => {
                 return Promise.reject(new Error("Failed to add entry to database"));
             });
 
@@ -143,41 +197,16 @@ export default class DatabaseClient {
                             .then((hash) => {
                                 return client.query("UPDATE admins SET password = $1 WHERE username = $2",
                                     [hash, admin.username])
-                                    .then((res) => {
+                                    .then(() => {
                                         return client.release();
                                     });
                             });
                     });
             })
-            .catch((err) => {
+            .catch(() => {
                 return Promise.reject(new Error("Failed to update entry in database"));
             });
 
     }
-
-    public addWaitList(email: string, firstName: string, lastName: string): Promise<WriteResult> {
-        return this.firestore.collection("waitlist").doc(email).set({
-            email,
-            firstName,
-            lastName,
-        });
-    }
-
-    public getPermissions(uid: string): Promise<Permission> {
-        return this.firestore.collection("permissions").doc(uid).get()
-            .then((doc) => {
-                if (!doc.exists) {
-                    return {};
-                } else {
-                    let data: Permission = {};
-                    try {
-                        data = doc.data();
-                    } catch (err) {
-                        serviceLog.error(err);
-                        return {};
-                    }
-                    return data;
-                }
-            });
-    }
+    */
 }
