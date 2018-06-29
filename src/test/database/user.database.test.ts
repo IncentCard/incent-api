@@ -2,6 +2,7 @@ import * as firebase from "firebase-admin";
 import "jest";
 import each from "jest-each";
 import * as uuid from "uuid";
+import * as config from "../../app/config";
 import DatabaseClient from "../../app/database/DatabaseClient";
 import MarqetaClient from "../../app/database/MarqetaClient";
 import { User } from "../../app/models/User";
@@ -14,7 +15,7 @@ describe("User database Tests", () => {
             credential: firebase.credential.cert("./serviceAccountKey.json"),
             databaseURL: "https://incentcard.firebaseio.com",
         });
-        database = new DatabaseClient(process.env.DATABASE_URL || "postgres://localhost:5432/test",
+        database = new DatabaseClient(config.databaseUrl,
             firebaseAdmin.firestore(),
             new MarqetaClient());
     });

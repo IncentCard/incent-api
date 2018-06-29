@@ -1,16 +1,7 @@
 import { AxiosPromise } from "axios";
 import { MarqetaUser } from "../../models/MarqetaUser";
 import { User } from "../../models/User";
-
 export default class MarqetaClient {
-    private marqeta: string;
-
-    public constructor() {
-        this.marqeta = process.env.MARQETA;
-        if (!this.marqeta) {
-            throw new Error("Can't find configuration for MARQETA");
-        }
-    }
 
     public addUser(user: User): AxiosPromise<any> {
         return Promise.resolve({

@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "predeploy": "npm run clean:build",
+    "source": "./"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

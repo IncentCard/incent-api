@@ -2,6 +2,7 @@ import { WriteResult } from "@google-cloud/firestore";
 import * as uuid from "uuid";
 import { Permission } from "../../models/Permission";
 import { User } from "../../models/User";
+import WaitlistEntry from "../../models/WaitlistEntry";
 
 export const mockAddUser = jest.fn().mockImplementation(
     (user: User): Promise<void> => {
@@ -20,10 +21,9 @@ export const mockGetUser = jest.fn().mockImplementation(
         ));
     });
 
-export const mockAddWaitList = jest.fn().mockImplementation(
-    (email: string, firstName: string, lastName: string): Promise<WriteResult> => {
-        this.addWaitlistCount++;
-        return Promise.resolve(null);
+export const mockAddWaitListEntry = jest.fn().mockImplementation(
+    (waitlistEntry: WaitlistEntry): Promise<WriteResult> => {
+        return Promise.resolve(undefined);
     });
 
 export const mockGetPermissions = jest.fn().mockImplementation(
@@ -35,7 +35,7 @@ export const mockGetPermissions = jest.fn().mockImplementation(
 
 export const mock = {
     addUser: mockAddUser,
-    addWaitList: mockAddWaitList,
+    addWaitListEntry: mockAddWaitListEntry,
     getPermissions: mockGetPermissions,
     getUser: mockGetUser,
     updateUser: mockUpdateUser,

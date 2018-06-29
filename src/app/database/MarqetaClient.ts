@@ -1,4 +1,6 @@
 import axios, { AxiosPromise } from "axios";
+import * as functions from "firebase-functions";
+import * as config from "../config";
 import { MarqetaUser } from "../models/MarqetaUser";
 import { User } from "../models/User";
 
@@ -6,7 +8,7 @@ export default class MarqetaClient {
     private marqeta: string;
 
     public constructor() {
-        this.marqeta = process.env.MARQETA;
+        this.marqeta = config.marqetaUrl;
         if (!this.marqeta) {
             throw new Error("Can't find configuration for MARQETA");
         }

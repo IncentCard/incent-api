@@ -1,4 +1,4 @@
-import { WriteResult } from "@google-cloud/firestore";
+import { WriteResult, DocumentData } from "@google-cloud/firestore";
 import bcrypt from "bcrypt";
 import pg from "pg";
 import { Logger } from "typescript-logging";
@@ -8,6 +8,7 @@ import { Permission } from "../models/Permission";
 import { User } from "../models/User";
 import { DatabaseError } from "./DatabaseError";
 import MarqetaClient from "./MarqetaClient";
+import WaitlistEntry from "../models/WaitlistEntry";
 
 export default class DatabaseClient {
     private pool: pg.Pool;
@@ -102,12 +103,51 @@ export default class DatabaseClient {
             });
     }
 
-    public addWaitList(email: string, firstName: string, lastName: string): Promise<WriteResult> {
-        return this.firestore.collection("waitlist").doc(email).set({
-            email,
-            firstName,
-            lastName,
+    public addWaitListEntry(entry: WaitlistEntry): Promise<WriteResult> {
+        if (!entry) {
+            return Promise.reject(new DatabaseError("Valid entry must be provided"));
+        }
+        return this.firestore.collection("waitlist").doc(entry.email).get()
+            .then((data) => {
+                if (data.exists) {
+                    return Promise.reject(new DatabaseError("Entry for email already exists"));
+                } else {
+                    return this.firestore.collection("waitlist").doc(entry.email).set({
+                        email: entry.email,
+                        firstName: entry.firstName,
+                    });
+                }
+            });
+    }
+
+    public updateWaitListEntry(entry: WaitlistEntry): Promise<WriteResult> {
+        if (!entry) {
+            return Promise.reject(new DatabaseError("Valid entry must be provided"));
+        }
+        return this.firestore.collection("waitlist").doc(entry.email).set({
+            email: entry.email,
+            firstName: entry.firstName,
         });
+    }
+
+    public getWaitListEntry(email: string): Promise<WaitlistEntry> {
+        if (!email) {
+            return Promise.reject(new DatabaseError("Valid email must be provided"));
+        }
+        return this.firestore.collection("waitlist").doc(email).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const data: DocumentData = doc.data();
+                    this.logger.debug(`Retrieved waitlist entry for email: ${email}. \n${data}`);
+                    return Promise.resolve(new WaitlistEntry(data.email, data.firstName));
+                } else {
+                    return Promise.reject(new DatabaseError("Failed to retrieve WaitlistEntry with email: " + email));
+                }
+            })
+            .catch((err) => {
+                this.logger.error("Failed to retrieve waitlist entry for email: " + email);
+                return Promise.reject(err);
+            });
     }
 
     public getPermissions(uid: string): Promise<Permission> {

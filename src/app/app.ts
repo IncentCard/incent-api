@@ -2,6 +2,7 @@ import * as bodyParser from "body-parser";
 import express from "express";
 import * as admin from "firebase-admin";
 import passport from "passport";
+import * as config from "./config";
 import * as authController from "./controllers/auth";
 import * as userController from "./controllers/user";
 import * as utility from "./controllers/utility";
@@ -14,17 +15,18 @@ export const firebase = admin.initializeApp({
   databaseURL: "https://incentcard.firebaseio.com",
 });
 
-const databaseLocation = process.env.DATABASE_URL || "postgres://localhost:5432/test";
 export const marqetaClient: MarqetaClient = new MarqetaClient();
-export const database = new DatabaseClient(databaseLocation, admin.firestore(), marqetaClient);
+export const database = new DatabaseClient(config.databaseUrl, admin.firestore(), marqetaClient);
 
 const app = express();
 app.use(bodyParser.json());
 app.use(passport.initialize());
-app.set("port", process.env.PORT || 3001);
 
 // root endpoint
 app.get("/", utility.index);
+
+// ping marqeta to make sure connection is alive
+app.get("/ping", utility.ping);
 
 // user endpoint
 app.post("/user", authController.isAuthenticated, userController.postUser);
@@ -32,9 +34,12 @@ app.put("/user", authController.isAuthenticated, userController.putUser);
 app.get("/user/:id", authController.isAuthenticated, userController.getUser);
 
 app.post("/waitlist", authController.isAuthenticated, authController.isAllowed, waitlistController.postWaitList);
+app.put("/waitlist", authController.isAuthenticated, authController.isAllowed, waitlistController.putWaitList);
+app.get("/waitlist/:email", authController.isAuthenticated, authController.isAllowed, waitlistController.getWaitList);
+
 // STUFF BELOW HERE IS LEGACY AND WILL BE DELETED EVENTUALLY
 
-// app.get("/ping", utility.ping);app.post("/user/login", userController.postLogin);
+// app.post("/user/login", userController.postLogin);
 
 // app.get("/user/kyc", userController.kyc);
 
