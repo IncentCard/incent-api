@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
-import * as request from "request";
 import * as uuid from "uuid";
 import { database } from "../app";
-import { User } from "../models/User";
 import { serviceLog } from "../configLog4j";
+import { User } from "../models/User";
 
 // todo: add error handling to all failed promises
 

@@ -23,4 +23,4 @@ export function getIdToken(email: string, password: string): Promise<string> {
             console.error(err);
             return Promise.reject(err);
         });
-};
+}

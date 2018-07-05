@@ -56,7 +56,7 @@ export default class DatabaseClient {
                         })
                         .catch((err: Error) => {
                             this.logger.error(err.message);
-                            return Promise.reject(new Error("Failed to add entry to database"))
+                            return Promise.reject(new Error("Failed to add entry to database"));
                         });
             })
             .catch((err: Error) => {
