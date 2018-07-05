@@ -19,6 +19,7 @@ describe("User tests", () => {
         birthDate: "1941-12-7",
         city: "Honolulu",
         country: "USA",
+        favoriteFood: "Pizza",
         firstName: "Perl",
         id: "BB-39",
         lastName: "Harbor",
@@ -45,6 +46,8 @@ describe("User tests", () => {
         token: "BB-39",
         zip: "96818",
     };
+
+    const nonMarqetaFields: string[] = ["favoriteFood"];
 
     test("Verify minimum arguments", () => {
         const user: User = new User({ id: sampleJson.id });
@@ -81,7 +84,11 @@ describe("User tests", () => {
         const user: User = new User(sampleMarqeta);
 
         for (const field in sampleJson) {
-            expect(user[field]).toEqual(sampleJson[field]);
+            if (nonMarqetaFields.includes(field)) {
+                expect(user[field]).toBeUndefined();
+            } else {
+                expect(user[field]).toEqual(sampleJson[field]);
+            }
         }
     });
 

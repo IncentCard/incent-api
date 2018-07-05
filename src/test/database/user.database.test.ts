@@ -15,7 +15,7 @@ describe("User database Tests", () => {
             credential: firebase.credential.cert("./serviceAccountKey.json"),
             databaseURL: "https://incentcard.firebaseio.com",
         });
-        database = new DatabaseClient(config.databaseUrl,
+        database = new DatabaseClient(
             firebaseAdmin.firestore(),
             new MarqetaClient());
     });
@@ -60,6 +60,11 @@ describe("User database Tests", () => {
                 return expect(database.addUser(user)).rejects.toThrow("Duplicate user ID or Token");
             });
     }, 2000);
+
+    test("User get non-existent entry", () => {
+        const id = uuid.v4();
+        return expect(database.getUser(id)).rejects.toThrow("Failed to retrieve User with id: " + id);
+    });
 
     test("User null add", () => {
         return expect(database.addUser(null)).rejects.toThrow("User must not be null");

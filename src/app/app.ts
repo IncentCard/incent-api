@@ -16,7 +16,7 @@ export const firebase = admin.initializeApp({
 });
 
 export const marqetaClient: MarqetaClient = new MarqetaClient();
-export const database = new DatabaseClient(config.databaseUrl, admin.firestore(), marqetaClient);
+export const database = new DatabaseClient(admin.firestore(), marqetaClient);
 
 const app = express();
 app.use(bodyParser.json());

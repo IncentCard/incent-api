@@ -13,6 +13,7 @@ import * as utilities from "../utilities";
 
 // Mocks the DatabaseClient and allows for modifications of mock implementations directly
 jest.mock("../../app/database/DatabaseClient", () => {
+    // NOTE: This cannot be an arrow function
     // tslint:disable-next-line:only-arrow-functions
     return function() {
         return require("../../app/database/__mocks__/DatabaseClient").mock;
@@ -31,7 +32,7 @@ describe("Waitlist endpoint tests", () => {
     });
 
     test("waitlist post with no token", (done) => {
-        request(server)
+        return request(server)
             .post("/waitlist")
             .set("Content-Type", "application/json")
             .send({
@@ -43,7 +44,7 @@ describe("Waitlist endpoint tests", () => {
     });
 
     test("waitlist put with no token", (done) => {
-        request(server)
+        return request(server)
             .put("/waitlist")
             .set("Content-Type", "application/json")
             .send({
@@ -55,18 +56,19 @@ describe("Waitlist endpoint tests", () => {
     });
 
     test("waitlist get with no token", (done) => {
-        request(server)
+        return request(server)
             .get("/waitlist/bogus")
             .set("Content-Type", "application/json")
             .expect(401, done);
     });
 
-    test("waitlist post with no permissions", (done) => {
+    test("waitlist post with no permissions", () => {
         mockGetPermissions.mockImplementationOnce((): Promise<Permission> => {
             return Promise.resolve({});
         });
-        utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD, (idToken: string) => {
-            request(server)
+        return utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD)
+        .then((idToken: string) => {
+            return request(server)
                 .post("/waitlist")
                 .set("Content-Type", "application/json")
                 .set("Authorization", "Bearer " + idToken)
@@ -75,16 +77,17 @@ describe("Waitlist endpoint tests", () => {
                     firstName: "Joe",
                     lastName: "Cracker",
                 })
-                .expect(403, done);
+                .expect(403);
         });
     });
 
-    test("waitlist put with no permissions", (done) => {
+    test("waitlist put with no permissions", () => {
         mockGetPermissions.mockImplementationOnce((): Promise<Permission> => {
             return Promise.resolve({});
         });
-        utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD, (idToken: string) => {
-            request(server)
+        return utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD)
+        .then((idToken: string) => {
+            return request(server)
                 .put("/waitlist")
                 .set("Content-Type", "application/json")
                 .set("Authorization", "Bearer " + idToken)
@@ -93,27 +96,29 @@ describe("Waitlist endpoint tests", () => {
                     firstName: "Joe",
                     lastName: "Cracker",
                 })
-                .expect(403, done);
+                .expect(403);
         });
     });
 
-    test("waitlist get with no permissions", (done) => {
+    test("waitlist get with no permissions", () => {
         mockGetPermissions.mockImplementationOnce((): Promise<Permission> => {
             return Promise.resolve({});
         });
-        utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD, (idToken: string) => {
-            request(server)
+        return utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD)
+        .then((idToken: string) => {
+            return request(server)
                 .get("/waitlist/bogus")
                 .set("Content-Type", "application/json")
                 .set("Authorization", "Bearer " + idToken)
-                .expect(403, done);
+                .expect(403);
         });
     });
 
-    test("waitlist add", (done) => {
+    test("waitlist add", () => {
         const expected: WaitlistEntry = new WaitlistEntry(uuid.v4() + "@incentcard.com", uuid.v4());
-        utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD, (idToken: string) => {
-            request(server)
+        return utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD)
+        .then((idToken: string) => {
+            return request(server)
                 .post("/waitlist")
                 .set("Content-Type", "application/json")
                 .set("Authorization", "Bearer " + idToken)
@@ -123,20 +128,20 @@ describe("Waitlist endpoint tests", () => {
                 })
                 .expect(201)
                 .then(() => {
-                    expect(mockAddWaitListEntry).toHaveBeenCalledWith(expected);
-                    done();
+                    return expect(mockAddWaitListEntry).toHaveBeenCalledWith(expected);
                 });
         });
     });
 
-    test("waitlist add duplicate", (done) => {
+    test("waitlist with duplicate", () => {
         mockAddWaitListEntry.mockImplementationOnce(
             (waitlistEntry: WaitlistEntry): Promise<WriteResult> => {
                 return Promise.reject(new DatabaseError("Entry for email already exists"));
             });
         const expected: WaitlistEntry = new WaitlistEntry(uuid.v4() + "@incentcard.com", uuid.v4());
-        utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD, (idToken: string) => {
-            request(server)
+        return utilities.getIdToken(process.env.TEST_USERNAME, process.env.TEST_PASSWORD)
+        .then((idToken: string) => {
+            return request(server)
                 .post("/waitlist")
                 .set("Content-Type", "application/json")
                 .set("Authorization", "Bearer " + idToken)
@@ -144,7 +149,7 @@ describe("Waitlist endpoint tests", () => {
                     email: expected.email,
                     firstName: expected.firstName,
                 })
-                .expect(422, "Entry for email already exists", done);
+                .expect(422, "Entry for email already exists");
         });
     });
 

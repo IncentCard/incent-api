@@ -1,27 +1,35 @@
-import { WriteResult, DocumentData } from "@google-cloud/firestore";
-import bcrypt from "bcrypt";
-import pg from "pg";
+import { DocumentData, WriteResult } from "@google-cloud/firestore";
 import { Logger } from "typescript-logging";
+import * as config from "../config";
 import { logFactory } from "../configLog4j";
-import { Admin } from "../models/Admin";
 import { Permission } from "../models/Permission";
-import { User } from "../models/User";
+import { IUser, User } from "../models/User";
+import WaitlistEntry from "../models/WaitlistEntry";
 import { DatabaseError } from "./DatabaseError";
 import MarqetaClient from "./MarqetaClient";
-import WaitlistEntry from "../models/WaitlistEntry";
+
+export interface DatabaseCollectionNames {
+    permissions: string;
+    users: string;
+    waitlist: string;
+}
 
 export default class DatabaseClient {
-    private pool: pg.Pool;
+    private logger: Logger = logFactory.getLogger("database");
     private firestore: FirebaseFirestore.Firestore;
     private marqetaClient: MarqetaClient;
-    private logger: Logger = logFactory.getLogger("database");
+    private collectionNames: DatabaseCollectionNames;
 
-    public constructor(connectionString: string, firestore: FirebaseFirestore.Firestore, marqetaClient: MarqetaClient) {
+    public constructor(firestore: FirebaseFirestore.Firestore,
+                       marqetaClient: MarqetaClient,
+                       collectionNames: DatabaseCollectionNames = null) {
         this.firestore = firestore;
-        this.pool = new pg.Pool({
-            connectionString,
-        });
         this.marqetaClient = marqetaClient;
+        this.collectionNames = collectionNames || config.databaseCollectionNames;
+    }
+
+    public getDatabaseCollectionNames(): DatabaseCollectionNames {
+        return this.collectionNames;
     }
 
     public addUser(user: User): Promise<void> {
@@ -40,17 +48,16 @@ export default class DatabaseClient {
                 // add response to database
                 const createdUser: User = new User(response.data);
                 user.merge(createdUser);
-                return this.pool.query("INSERT INTO users(id, data) values($1, $2)", [user.id, user.stringify(true)])
-                    .then(() => {
-                        this.logger.debug(`Added user ${user.id} to database`);
-                    })
-                    .catch((err: Error) => {
-                        if (err.message.includes("duplicate")) {
-                            return Promise.reject(new Error("Duplicate user ID or Token"));
-                        } else {
-                            return Promise.reject(new Error("Failed to add entry to database"));
-                        }
-                    });
+                return this.firestore.collection(this.collectionNames.users).doc(user.id).set(user.convertToJSON(true))
+                        .then((writeResult) => {
+                            // tslint:disable-next-line:max-line-length
+                            this.logger.debug(`Request to store user: ${user.id} to firestore completed in: ${writeResult.writeTime}`);
+                            return;
+                        })
+                        .catch((err: Error) => {
+                            this.logger.error(err.message);
+                            return Promise.reject(new Error("Failed to add entry to database"))
+                        });
             })
             .catch((err: Error) => {
                 if (err.message.includes("Request failed with status code 409")) {
@@ -73,8 +80,10 @@ export default class DatabaseClient {
         return this.marqetaClient.updateUser(user)
             .then((response) => {
                 this.logger.debug("Updated marqeta user: " + response.data);
-                return this.pool.query("UPDATE users SET data = $1 WHERE id = $2", [user.stringify(true), user.id])
-                    .then(() => {
+                return this.firestore.collection(this.collectionNames.users).doc(user.id).set(user.convertToJSON(true))
+                    .then((writeResult) => {
+                        // tslint:disable-next-line:max-line-length
+                        this.logger.debug(`Request to update user: ${user.id} in firestore completed in: ${writeResult.writeTime}`);
                         return Promise.resolve();
                     })
                     .catch(() => {
@@ -91,28 +100,35 @@ export default class DatabaseClient {
         return this.marqetaClient.getUser(id)
             .then((response) => {
                 const user: User = new User(response.data);
-                return this.pool.query("SELECT data FROM users WHERE id = $1",
-                    [id]).then((res): Promise<User> => {
-                        const data = res.rows[0];
-                        user.merge(new User(data.data));
-                        return Promise.resolve(user);
-                    })
-                    .catch(() => {
-                        return Promise.reject(new Error("Failed to get entry from database"));
+                return this.firestore.collection(this.collectionNames.users).doc(id).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const data: DocumentData = doc.data();
+                            data.id = id;
+                            this.logger.debug(`Retrieved User entry for id: ${id}. \n${data}`);
+                            user.merge(new User(data as IUser));
+                            return Promise.resolve(user);
+                        } else {
+                            return Promise.reject(new DatabaseError("Failed to retrieve User with id: " + id));
+                        }
                     });
-            });
+        })
+        .catch((err: Error) => {
+            this.logger.error(err.message);
+            return Promise.reject(new DatabaseError("Failed to retrieve User with id: " + id));
+        });
     }
 
     public addWaitListEntry(entry: WaitlistEntry): Promise<WriteResult> {
         if (!entry) {
             return Promise.reject(new DatabaseError("Valid entry must be provided"));
         }
-        return this.firestore.collection("waitlist").doc(entry.email).get()
+        return this.firestore.collection(this.collectionNames.waitlist).doc(entry.email).get()
             .then((data) => {
                 if (data.exists) {
                     return Promise.reject(new DatabaseError("Entry for email already exists"));
                 } else {
-                    return this.firestore.collection("waitlist").doc(entry.email).set({
+                    return this.firestore.collection(this.collectionNames.waitlist).doc(entry.email).set({
                         email: entry.email,
                         firstName: entry.firstName,
                     });
@@ -124,7 +140,7 @@ export default class DatabaseClient {
         if (!entry) {
             return Promise.reject(new DatabaseError("Valid entry must be provided"));
         }
-        return this.firestore.collection("waitlist").doc(entry.email).set({
+        return this.firestore.collection(this.collectionNames.waitlist).doc(entry.email).set({
             email: entry.email,
             firstName: entry.firstName,
         });
@@ -134,7 +150,7 @@ export default class DatabaseClient {
         if (!email) {
             return Promise.reject(new DatabaseError("Valid email must be provided"));
         }
-        return this.firestore.collection("waitlist").doc(email).get()
+        return this.firestore.collection(this.collectionNames.waitlist).doc(email).get()
             .then((doc) => {
                 if (doc.exists) {
                     const data: DocumentData = doc.data();
@@ -151,7 +167,7 @@ export default class DatabaseClient {
     }
 
     public getPermissions(uid: string): Promise<Permission> {
-        return this.firestore.collection("permissions").doc(uid).get()
+        return this.firestore.collection(this.collectionNames.permissions).doc(uid).get()
             .then((doc) => {
                 if (!doc.exists) {
                     return {};

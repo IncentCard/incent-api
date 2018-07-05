@@ -3,6 +3,7 @@ import * as request from "request";
 import * as uuid from "uuid";
 import { database } from "../app";
 import { User } from "../models/User";
+import { serviceLog } from "../configLog4j";
 
 // todo: add error handling to all failed promises
 
@@ -23,7 +24,7 @@ export let postUser = (req: Request, res: Response) => {
 
 export let putUser = (req: Request, res: Response) => {
   const payload = req.body;
-  console.log(payload);
+  serviceLog.debug(payload);
   if (!payload) {
     res.json({
       error: true,
@@ -36,7 +37,8 @@ export let putUser = (req: Request, res: Response) => {
     .then(() => {
       res.json(user.convertToJSON());
     })
-    .catch((err) => {
+    .catch((err: Error) => {
+      serviceLog.error(err.message);
       res.sendStatus(422);
     });
 };

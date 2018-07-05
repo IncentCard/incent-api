@@ -13,6 +13,7 @@ export interface IUser {
   ssn?: string;
   state?: string;
   zip?: string;
+  favoriteFood?: string;
 }
 
 export class User implements IUser {
@@ -26,6 +27,7 @@ export class User implements IUser {
   private _country: string;
   private _birthDate: string;
   private _ssn: string;
+  private _favoriteFood: string;
 
   public constructor(json: IUser | MarqetaUser) {
     if (!json) {
@@ -43,6 +45,12 @@ export class User implements IUser {
     this.country = json.country;
     this.birthDate = isMarqeta ? (json as MarqetaUser).birth_date : (json as IUser).birthDate;
     this.ssn = json.ssn;
+
+    // set IUser only values
+    if (!isMarqeta) {
+      json = json as IUser;
+      this.favoriteFood = json.favoriteFood;
+    }
   }
 
   public convertToMarqeta(): MarqetaUser {
@@ -60,8 +68,13 @@ export class User implements IUser {
     };
   }
 
+  /**
+   * Converts the object to JSON. Gives the option to remove any fields that would be present in MarqetaUser.
+   * @param compress Default is false. If true any fields that would exist in MarqetaUser are omitted from the JSON.
+   */
   public convertToJSON(compress = false): IUser {
     const json: IUser = {
+      favoriteFood: this.favoriteFood || null,
       id: this.id,
     };
 
@@ -84,6 +97,10 @@ export class User implements IUser {
     return JSON.stringify(this.convertToJSON(compress));
   }
 
+  /**
+   * Merges two user objects together. Any field present on the passed in User overwrites the value in this User.
+   * @param other The other user to merge into this one.
+   */
   public merge(other: User) {
     this.id = other.id || this.id;
     this.firstName = other.firstName || this.firstName;
@@ -95,6 +112,7 @@ export class User implements IUser {
     this.country = other.country || this.country;
     this.birthDate = other.birthDate || this.birthDate;
     this.ssn = other.ssn || this.ssn;
+    this.favoriteFood = other.favoriteFood || this.favoriteFood;
   }
 
   private isMarqetaUser(object: any): object is MarqetaUser {
@@ -102,6 +120,23 @@ export class User implements IUser {
   }
 
   //////// Getters and Setters ////////
+
+  /**
+   * Getter favoriteFood
+   * @return {string}
+   */
+  public get favoriteFood(): string {
+    return this._favoriteFood;
+  }
+
+  /**
+   * Setter favoriteFood
+   * @param {string} value
+   */
+  public set favoriteFood(value: string) {
+    this._favoriteFood = value;
+  }
+
   /**
    * Getter id
    * @return {string}

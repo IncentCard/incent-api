@@ -29,6 +29,7 @@ export const mockAddWaitListEntry = jest.fn().mockImplementation(
 export const mockGetPermissions = jest.fn().mockImplementation(
     (uid: string): Promise<Permission> => {
         return Promise.resolve({
+            users: "*",
             waitlist: "*",
         });
     });

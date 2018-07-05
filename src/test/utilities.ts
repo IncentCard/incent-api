@@ -1,27 +1,26 @@
-import * as request from "request";
-
+import axios from "axios";
 const savedIdTokens = new Map();
 
-export function getIdToken(email: string, password: string, callback: (idToken: string) => void): void {
+export function getIdToken(email: string, password: string): Promise<string> {
     if (savedIdTokens.get(email)) {
-        callback(savedIdTokens.get(email));
+        return Promise.resolve(savedIdTokens.get(email));
     }
-    request.post({
-        body: JSON.stringify({ email, password, returnSecureToken: true }),
-        headers: {
-            "content-type": "application/json",
-        },
+    return axios.post(
         // tslint:disable-next-line:max-line-length
-        url: "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyAvNCAOfMKNWbRIHwVxLHBtFtm9yHH6tBA",
-    }, (error, response, body) => {
-        if (error) {
-            console.error(error);
-            callback(null);
-        } else {
-            body = JSON.parse(body);
-            const token = body.idToken;
+        "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyAvNCAOfMKNWbRIHwVxLHBtFtm9yHH6tBA",
+        { email, password, returnSecureToken: true },
+        {
+            headers: {
+                "content-type": "application/json",
+            },
+        })
+        .then((response) => {
+            const token = response.data.idToken;
             savedIdTokens.set(email, token);
-            callback(token);
-        }
-    });
-}
+            return token;
+        })
+        .catch((err) => {
+            console.error(err);
+            return Promise.reject(err);
+        });
+};

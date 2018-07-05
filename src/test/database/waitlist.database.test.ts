@@ -11,40 +11,21 @@ describe("User database Tests", () => {
     let database: DatabaseClient;
     let firebaseAdmin: firebase.app.App;
     let testId: string;
-    const emails: string[] = [];
 
     beforeAll(() => {
         firebaseAdmin = firebase.initializeApp({
             credential: firebase.credential.cert("./serviceAccountKey.json"),
             databaseURL: "https://incentcard.firebaseio.com",
         });
-        database = new DatabaseClient(config.databaseUrl,
-            firebaseAdmin.firestore(),
-            new MarqetaClient());
+        database = new DatabaseClient(firebaseAdmin.firestore(), new MarqetaClient());
     });
 
     beforeEach(() => {
         testId = uuid.v4();
     });
 
-    afterEach(() => {
-        if (emails.length <= 0) {
-            return;
-        }
-
-        const promises = [];
-        emails.every((value: string, index: number, array: string[]): boolean => {
-            promises.push(firebaseAdmin.firestore().collection("waitlist").doc(value).delete());
-            return true;
-        });
-        return Promise.all(promises).then(() => {
-            console.log("Finished deleting");
-        });
-    });
-
     test("add and get waitlist entry", () => {
         const email: string = testId + "@test.incentcard.com";
-        emails.push(email);
         const waitlistEntry: WaitlistEntry = new WaitlistEntry(email, testId);
         return database.addWaitListEntry(waitlistEntry)
             .then(() => {
@@ -57,7 +38,6 @@ describe("User database Tests", () => {
 
     test("add, update, and get waitlist entry", () => {
         const email: string = testId + "@test.incentcard.com";
-        emails.push(email);
         const waitlistEntry: WaitlistEntry = new WaitlistEntry(email, testId);
         return database.addWaitListEntry(waitlistEntry)
         .then(() => {
@@ -74,7 +54,6 @@ describe("User database Tests", () => {
 
     test("add duplicate waitlist entry", () => {
         const email: string = testId + "@test.incentcard.com";
-        emails.push(email);
         const waitlistEntry: WaitlistEntry = new WaitlistEntry(email, testId);
         return database.addWaitListEntry(waitlistEntry)
         .then(() => {
